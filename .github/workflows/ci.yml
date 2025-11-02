@@ -1,39 +1,26 @@
-name: CI/CD Pipeline
+name: Build Spring Boot
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-      
-    - name: Set up Java
+    - uses: actions/checkout@v2
+    
+    - name: Set up JDK 11
       uses: actions/setup-java@v2
       with:
         java-version: '11'
         distribution: 'temurin'
         
-    - name: Build application
+    - name: Build with Maven
       run: mvn clean package -DskipTests
       
-    - name: Generate deployment guide
-      run: |
-        echo "## 🚀 部署指南" > DEPLOY.md
-        echo "" >> DEPLOY.md
-        echo "### 方法1: Railway 部署" >> DEPLOY.md
-        echo "1. 访问 https://railway.app" >> DEPLOY.md
-        echo "2. 连接 GitHub 仓库" >> DEPLOY.md
-        echo "3. 自动部署完成" >> DEPLOY.md
-        echo "" >> DEPLOY.md
-        echo "### 方法2: 本地运行" >> DEPLOY.md
-        echo "下载 JAR 包: https://github.com/${{ github.repository }}/actions" >> DEPLOY.md
-        echo "运行: \`java -jar hr-management-system-0.0.1-SNAPSHOT.jar\`" >> DEPLOY.md
-        
-    - name: Upload artifacts
+    - name: Upload JAR
       uses: actions/upload-artifact@v2
       with:
-        name: hr-system-jar
+        name: hr-management-app
         path: target/*.jar
+        retention-days: 30
