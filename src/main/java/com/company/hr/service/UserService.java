@@ -24,4 +24,7 @@ public interface UserService {
     User login(String username, String password);
 
     void disable(Long userId);
+
+    // 用户注册
+    User register(User user);
 }

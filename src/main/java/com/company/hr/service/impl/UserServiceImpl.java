@@ -75,4 +75,46 @@ public class UserServiceImpl implements UserService {
             userMapper.update(user);
         }
     }
+
+    @Override
+    public User register(User user) {
+        if (user == null) {
+            throw new RuntimeException("注册信息不能为空");
+        }
+
+        String username = user.getUsername();
+        String password = user.getPassword();
+
+        if (username == null || username.trim().isEmpty()) {
+            throw new RuntimeException("用户名不能为空");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            throw new RuntimeException("密码不能为空");
+        }
+
+        if (isUsernameExists(username)) {
+            throw new RuntimeException("用户名已存在");
+        }
+
+        // 使用与登录一致的MD5进行密码加密（保持当前系统一致性）
+        String encryptedPassword = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
+        user.setPassword(encryptedPassword);
+
+        // 默认角色与状态
+        if (user.getRole() == null || user.getRole().trim().isEmpty()) {
+            user.setRole("user");
+        }
+        if (user.getStatus() == null || user.getStatus().trim().isEmpty()) {
+            user.setStatus("active");
+        }
+
+        // 创建人默认设置为0（匿名注册）
+        if (user.getCreatedBy() == null) {
+            user.setCreatedBy(0L);
+        }
+
+        userMapper.insert(user);
+        // 返回带ID的用户信息
+        return userMapper.findByUsername(username);
+    }
 }

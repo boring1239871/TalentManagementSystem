@@ -54,4 +54,38 @@ public class AuthController extends BaseController {
     public Result<String> logout() {
         return Result.success("登出成功");
     }
+
+    // 用户注册
+    @PostMapping("/register")
+    public Result<User> register(@RequestBody Map<String, String> registerRequest) {
+        String username = registerRequest.get("username");
+        String password = registerRequest.get("password");
+        String realName = registerRequest.get("realName");
+        String email = registerRequest.get("email");
+        String phone = registerRequest.get("phone");
+
+        // 参数校验
+        if (username == null || username.trim().isEmpty()) {
+            return Result.error("用户名不能为空");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            return Result.error("密码不能为空");
+        }
+        if (realName == null || realName.trim().isEmpty()) {
+            return Result.error("姓名不能为空");
+        }
+
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(password);
+        newUser.setRealName(realName);
+        newUser.setEmail(email);
+        newUser.setPhone(phone);
+        // 角色与状态在服务层设置默认值
+
+        User created = userService.register(newUser);
+        // 不返回密码
+        created.setPassword(null);
+        return Result.success("注册成功", created);
+    }
 }
