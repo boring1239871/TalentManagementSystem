@@ -60,7 +60,8 @@ public class EmployeeChangeLogController extends BaseController {
             @RequestParam String newValue,
             @RequestParam String reason,
             @RequestParam Long operatorId) {
-        employeeChangeLogService.recordEmployeeChange(empId, changeType, changedField, oldValue, newValue, reason, operatorId);
+        employeeChangeLogService.recordEmployeeChange(empId, changeType, changedField, oldValue, newValue, reason,
+                operatorId);
         return Result.success("员工变更记录成功");
     }
 }

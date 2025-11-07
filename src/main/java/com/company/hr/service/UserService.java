@@ -26,5 +26,5 @@ public interface UserService {
     void disable(Long userId);
 
     // 用户注册
-    User register(User user);
+
 }

@@ -64,7 +64,8 @@ public class EmployeeSalaryHistoryController extends BaseController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate effectiveDate,
             @RequestParam String reason,
             @RequestParam Long operatorId) {
-        employeeSalaryHistoryService.recordSalaryChange(empId, salaryStandardId, salaryItems, totalAmount, effectiveDate, reason, operatorId);
+        employeeSalaryHistoryService.recordSalaryChange(empId, salaryStandardId, salaryItems, totalAmount,
+                effectiveDate, reason, operatorId);
         return Result.success("薪资变更记录成功");
     }
 }

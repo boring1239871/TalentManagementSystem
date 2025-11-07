@@ -43,7 +43,7 @@ public class UserController extends BaseController {
         if (userService.isUsernameExists(user.getUsername())) {
             return Result.error("用户名已存在");
         }
-        
+
         user.setStatus("active");
         userService.save(user);
         return Result.success("用户创建成功");

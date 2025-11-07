@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HR 管理系统 API 测试页面</title>
+    <style>
+      :root {
+        --bg: #f8f9fa;
+        --fg: #222;
+        --muted: #6c757d;
+        --border: #dee2e6;
+        --primary: #0d6efd;
+        --danger: #dc3545;
+        --success: #198754;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji";
+        margin: 24px;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      h1,
+      h2 {
+        margin: 12px 0;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+        flex-wrap: wrap;
+      }
+      .input,
+      input[type="text"],
+      input[type="password"],
+      select,
+      textarea {
+        min-width: 280px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        outline: none;
+      }
+      textarea {
+        width: 100%;
+        min-height: 90px;
+      }
+      button {
+        padding: 8px 14px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: var(--primary);
+      }
+      button.danger {
+        background: var(--danger);
+        color: #fff;
+        border-color: var(--danger);
+      }
+      button.success {
+        background: var(--success);
+        color: #fff;
+        border-color: var(--success);
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin: 12px 0;
+      }
+      .token-display {
+        word-break: break-all;
+        background-color: #fff;
+        padding: 10px;
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 12px;
+      }
+      details {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: #fff;
+        padding: 8px 12px;
+        margin: 12px 0;
+      }
+      summary {
+        font-weight: 600;
+        cursor: pointer;
+      }
+      pre {
+        background-color: #fff;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        white-space: pre-wrap;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .kv-row {
+        display: flex;
+        gap: 6px;
+        margin: 6px 0;
+      }
+      .status-ok { color: var(--success); }
+      .status-bad { color: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <h1>HR 管理系统 API 测试页面</h1>
+
+    <div class="card">
+      <div class="row">
+        <label for="baseUrl">API Base URL</label>
+        <input
+          type="text"
+          id="baseUrl"
+          value="http://127.0.0.1:8080"
+          placeholder="例如：http://localhost:8080"
+        />
+        <button onclick="saveBaseUrl()">保存</button>
+      </div>
+      <div class="muted">提示：若前端文件不在同源域名下访问，这里可确定跨域目标。</div>
+    </div>
+
+    <div class="card">
+      <h2>认证 / 登录</h2>
+      <div class="row">
+        <label for="username">用户名</label>
+        <input type="text" id="username" value="123456" />
+        <label for="password">密码</label>
+        <input type="password" id="password" value="123456" />
+        <button class="primary" onclick="login()">登录</button>
+      </div>
+      <div>
+        <h3>JWT Token</h3>
+        <div id="jwtTokenDisplay" class="token-display">尚未登录</div>
+      </div>
+      <div class="row">
+        <button onclick="getCurrentUser()">获取当前用户 /auth/current-user</button>
+        <button class="danger" onclick="logout()">退出登录 /auth/logout</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>通用请求调试器</h2>
+      <div class="grid">
+        <div>
+          <div class="row">
+            <label for="genericMethod">HTTP 方法</label>
+            <select id="genericMethod">
+              <option>GET</option>
+              <option>POST</option>
+              <option>PUT</option>
+              <option>DELETE</option>
+              <option>PATCH</option>
+            </select>
+            <label for="genericPath">路径</label>
+            <input type="text" id="genericPath" class="input" value="/auth/current-user" />
+          </div>
+          <div id="genericQueryParams"></div>
+          <div class="row">
+            <button onclick="addQueryParamRow('genericQueryParams')">添加查询参数</button>
+            <button onclick="clearQueryParams('genericQueryParams')">清空查询参数</button>
+          </div>
+          <div class="row">
+            <label for="genericBody">请求体 (JSON)</label>
+          </div>
+          <textarea id="genericBody" placeholder='{"key":"value"}'></textarea>
+          <div class="row">
+            <label><input type="checkbox" id="genericAuth" checked /> 带上认证头 (Bearer)</label>
+          </div>
+          <div class="row">
+            <button class="primary" onclick="sendGeneric()">发送请求</button>
+            <button onclick="preflightGeneric()">预检 OPTIONS</button>
+          </div>
+        </div>
+        <div>
+          <div class="row"><strong>响应状态：</strong> <span id="genericStatus" class="muted">-</span></div>
+          <div class="row"><strong>响应头：</strong></div>
+          <pre id="genericHeaders"></pre>
+          <div class="row"><strong>响应体：</strong></div>
+          <pre id="genericResponse"></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>分类端点测试</h2>
+      <div id="endpoints"></div>
+    </div>
+
+    <div class="card">
+      <h2>冒烟测试</h2>
+      <div class="row">
+        <button class="success" onclick="runSmokeTests()">运行冒烟测试 (登录→当前用户→列表接口)</button>
+      </div>
+      <pre id="smokeLog"></pre>
+    </div>
+
+    <div class="card">
+      <h2>使用说明 / 文档</h2>
+      <ul>
+        <li>先在“认证 / 登录”中登录以获取 JWT；成功后 Token 会显示在上方。</li>
+        <li>“通用请求调试器”支持任意方法与路径，添加查询参数，输入 JSON 请求体，勾选是否带认证。</li>
+        <li>“预检 OPTIONS”可检查服务端返回的跨域响应头 (Access-Control-Allow-*)，辅助定位 CORS。</li>
+        <li>“分类端点测试”按控制器罗列常见 REST 端点，可快速输入 ID 与请求体进行调用。</li>
+        <li>若响应体非 JSON，将自动展示原始文本；响应头会完整打印，便于定位问题。</li>
+      </ul>
+      <div class="muted">注意：浏览器不允许自定义 Origin 头，跨域预检由浏览器自动触发；这里的“预检 OPTIONS”只用于检查服务器对 OPTIONS 的处理与返回头。</div>
+    </div>
+
+    <script>
+      // ------------------------------
+      // 全局状态与工具函数
+      // ------------------------------
+      let jwtToken = "";
+
+      function saveBaseUrl() {
+        const base = document.getElementById('baseUrl').value.trim();
+        localStorage.setItem('hr_base_url', base);
+      }
+      (function restoreBaseUrl(){
+        const saved = localStorage.getItem('hr_base_url');
+        if(saved) document.getElementById('baseUrl').value = saved;
+      })();
+
+      function buildUrl(path, queryPairs) {
+        const baseUrl = document.getElementById('baseUrl').value.trim();
+        const u = new URL(baseUrl + path);
+        (queryPairs || []).forEach(([k,v]) => {
+          if (k) u.searchParams.append(k, v ?? '');
+        });
+        return u.toString();
+      }
+
+      function readQueryParams(containerId) {
+        const container = document.getElementById(containerId);
+        const rows = [...container.querySelectorAll('.kv-row')];
+        return rows.map(row => [
+          row.querySelector('.kv-key').value,
+          row.querySelector('.kv-val').value,
+        ]).filter(([k]) => k && k.length > 0);
+      }
+
+      function addQueryParamRow(containerId) {
+        const container = document.getElementById(containerId);
+        const row = document.createElement('div');
+        row.className = 'kv-row';
+        row.innerHTML = `
+          <input type="text" class="kv-key" placeholder="key" />
+          <input type="text" class="kv-val" placeholder="value" />
+          <button onclick="this.parentElement.remove()">移除</button>
+        `;
+        container.appendChild(row);
+      }
+
+      function clearQueryParams(containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+      }
+
+      async function doFetch(method, path, opts = {}) {
+        const { queryPairs = [], bodyText = null, withAuth = true, expectJson = true, extraHeaders = {} } = opts;
+        const url = buildUrl(path, queryPairs);
+        const headers = Object.assign({ 'Content-Type': 'application/json' }, extraHeaders);
+        if (withAuth && jwtToken) headers['Authorization'] = `Bearer ${jwtToken}`;
+
+        const init = { method, headers };
+        if (bodyText && !['GET','DELETE'].includes(method.toUpperCase())) {
+          init.body = bodyText;
+        }
+
+        const res = await fetch(url, init);
+        const headersObj = {};
+        res.headers.forEach((v, k) => headersObj[k] = v);
+        let body;
+        try {
+          body = expectJson ? await res.json() : await res.text();
+        } catch (e) {
+          body = await res.text();
+        }
+        return { ok: res.ok, status: res.status, statusText: res.statusText, headers: headersObj, body };
+      }
+
+      function setStatus(el, ok, status, text) {
+        el.className = ok ? 'status-ok' : 'status-bad';
+        el.textContent = `${status} ${text}`;
+      }
+
+      // ------------------------------
+      // 登录 / 退出 / 当前用户
+      // ------------------------------
+      async function login() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const tokenEl = document.getElementById('jwtTokenDisplay');
+        try {
+          const { ok, body } = await doFetch('POST', '/auth/login', { withAuth: false, bodyText: JSON.stringify({ username, password }) });
+          if (ok && body && body.data && body.data.token) {
+            jwtToken = body.data.token;
+            tokenEl.textContent = jwtToken;
+          } else {
+            jwtToken = '';
+            tokenEl.textContent = '登录失败';
+          }
+        } catch (e) {
+          jwtToken = '';
+          tokenEl.textContent = '登录失败 (网络错误)';
+        }
+      }
+
+      async function getCurrentUser() {
+        const res = await doFetch('GET', '/auth/current-user');
+        const out = document.getElementById('genericResponse');
+        const st = document.getElementById('genericStatus');
+        const hdr = document.getElementById('genericHeaders');
+        setStatus(st, res.ok, res.status, res.statusText);
+        hdr.textContent = JSON.stringify(res.headers, null, 2);
+        out.textContent = JSON.stringify(res.body, null, 2);
+      }
+
+      async function logout() {
+        const res = await doFetch('POST', '/auth/logout');
+        const tokenEl = document.getElementById('jwtTokenDisplay');
+        if (res.ok) {
+          jwtToken = '';
+          tokenEl.textContent = '已退出';
+        }
+      }
+
+      // ------------------------------
+      // 通用调试器
+      // ------------------------------
+      async function sendGeneric() {
+        const method = document.getElementById('genericMethod').value;
+        const path = document.getElementById('genericPath').value.trim();
+        const bodyTextRaw = document.getElementById('genericBody').value;
+        const withAuth = document.getElementById('genericAuth').checked;
+        const queryPairs = readQueryParams('genericQueryParams');
+
+        let bodyText = bodyTextRaw;
+        if (bodyText && bodyText.length > 0) {
+          // 验证 JSON
+          try { JSON.parse(bodyText); } catch(e) { alert('请求体不是有效 JSON'); return; }
+        }
+
+        const res = await doFetch(method, path, { queryPairs, bodyText, withAuth });
+        const out = document.getElementById('genericResponse');
+        const st = document.getElementById('genericStatus');
+        const hdr = document.getElementById('genericHeaders');
+        setStatus(st, res.ok, res.status, res.statusText);
+        hdr.textContent = JSON.stringify(res.headers, null, 2);
+        try {
+          out.textContent = typeof res.body === 'string' ? res.body : JSON.stringify(res.body, null, 2);
+        } catch (e) {
+          out.textContent = String(res.body);
+        }
+      }
+
+      async function preflightGeneric() {
+        const path = document.getElementById('genericPath').value.trim();
+        const method = document.getElementById('genericMethod').value.trim();
+        const res = await doFetch('OPTIONS', path, {
+          withAuth: false,
+          extraHeaders: {
+            'Access-Control-Request-Method': method,
+            'Access-Control-Request-Headers': 'content-type, authorization'
+          },
+          expectJson: false
+        });
+        const out = document.getElementById('genericResponse');
+        const st = document.getElementById('genericStatus');
+        const hdr = document.getElementById('genericHeaders');
+        setStatus(st, res.ok, res.status, res.statusText);
+        hdr.textContent = JSON.stringify(res.headers, null, 2);
+        out.textContent = typeof res.body === 'string' ? res.body : JSON.stringify(res.body, null, 2);
+      }
+
+      // ------------------------------
+      // 端点目录（根据控制器分类）
+      // ------------------------------
+      const endpointCatalog = [
+        {
+          section: 'AuthController (/auth)',
+          items: [
+            { name: '登录', method: 'POST', path: '/auth/login', requiresAuth: false, bodyExample: { username: '123456', password: '123456' } },
+            { name: '当前用户', method: 'GET', path: '/auth/current-user', requiresAuth: true },
+            { name: '退出登录', method: 'POST', path: '/auth/logout', requiresAuth: true },
+          ]
+        },
+        {
+          section: 'UserController (/users)',
+          items: [
+            { name: '列表', method: 'GET', path: '/users', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/users/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/users', requiresAuth: true, bodyExample: { /* 根据后端模型填写 */ } },
+            { name: '按ID更新', method: 'PUT', path: '/users/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { /* 根据后端模型填写 */ } },
+            { name: '按ID删除', method: 'DELETE', path: '/users/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'PositionController (/positions)',
+          items: [
+            { name: '列表', method: 'GET', path: '/positions', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/positions/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/positions', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/positions/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+            { name: '按ID删除', method: 'DELETE', path: '/positions/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'OrganizationController (/organizations)',
+          items: [
+            { name: '列表', method: 'GET', path: '/organizations', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/organizations/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/organizations', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/organizations/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+            { name: '按ID删除', method: 'DELETE', path: '/organizations/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'EmployeeController (/employees)',
+          items: [
+            { name: '列表', method: 'GET', path: '/employees', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/employees/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/employees', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/employees/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+            { name: '按ID删除', method: 'DELETE', path: '/employees/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'ProfessionalTitleController (/professional-titles)',
+          items: [
+            { name: '列表', method: 'GET', path: '/professional-titles', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/professional-titles/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/professional-titles', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/professional-titles/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+            { name: '按ID删除', method: 'DELETE', path: '/professional-titles/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'PositionTitleMappingController (/position-title-mappings)',
+          items: [
+            { name: '列表', method: 'GET', path: '/position-title-mappings', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/position-title-mappings/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/position-title-mappings', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/position-title-mappings/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+            { name: '按ID删除', method: 'DELETE', path: '/position-title-mappings/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'SalaryItemController (/salary-items)',
+          items: [
+            { name: '列表', method: 'GET', path: '/salary-items', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/salary-items/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/salary-items', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/salary-items/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+            { name: '按ID删除', method: 'DELETE', path: '/salary-items/{id}', requiresAuth: true, pathVars: ['id'] },
+          ]
+        },
+        {
+          section: 'SalaryIssueDetailController (/salary-issue-details)',
+          items: [
+            { name: '列表', method: 'GET', path: '/salary-issue-details', requiresAuth: true },
+            { name: '按ID查询', method: 'GET', path: '/salary-issue-details/{id}', requiresAuth: true, pathVars: ['id'] },
+            { name: '新增', method: 'POST', path: '/salary-issue-details', requiresAuth: true, bodyExample: { } },
+            { name: '按ID更新', method: 'PUT', path: '/salary-issue-details/{id}', requiresAuth: true, pathVars: ['id'], bodyExample: { } },
+          ]
+        },
+        {
+          section: 'SalaryIssueAdjustmentController (/salary-adjustments)',
+          items: [
+            { name: '列表', method: 'GET', path: '/salary-adjustments', requiresAuth: true },
+            { name: '新增', method: 'POST', path: '/salary-adjustments', requiresAuth: true, bodyExample: { } },
+          ]
+        },
+        {
+          section: 'EmployeeChangeLogController (/employee-change-logs)',
+          items: [
+            { name: '列表', method: 'GET', path: '/employee-change-logs', requiresAuth: true },
+            { name: '新增', method: 'POST', path: '/employee-change-logs', requiresAuth: true, bodyExample: { } },
+          ]
+        },
+      ];
+
+      function buildEndpointForm(container, item) {
+        const id = 'id_' + Math.random().toString(36).slice(2);
+        const queryId = 'query_' + Math.random().toString(36).slice(2);
+        const bodyId = 'body_' + Math.random().toString(36).slice(2);
+        const statusId = 'status_' + Math.random().toString(36).slice(2);
+        const hdrId = 'hdr_' + Math.random().toString(36).slice(2);
+        const outId = 'out_' + Math.random().toString(36).slice(2);
+        const authId = 'auth_' + Math.random().toString(36).slice(2);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'card';
+        const pathLabel = item.path;
+        wrapper.innerHTML = `
+          <div class="row"><strong>${item.name}</strong> <code>${item.method} ${pathLabel}</code></div>
+          ${item.pathVars ? item.pathVars.map(v => `
+            <div class="row">
+              <label>路径变量 ${v}</label>
+              <input type="text" id="${id}_${v}" placeholder="${v}" />
+            </div>
+          `).join('') : ''}
+          <div id="${queryId}"></div>
+          <div class="row">
+            <button onclick="addQueryParamRow('${queryId}')">添加查询参数</button>
+            <button onclick="clearQueryParams('${queryId}')">清空查询参数</button>
+          </div>
+          ${['POST','PUT','PATCH'].includes(item.method) ? `
+            <div class="row"><label>请求体 (JSON)</label></div>
+            <textarea id="${bodyId}" placeholder='${JSON.stringify(item.bodyExample || {}, null, 2)}'></textarea>
+          ` : ''}
+          <div class="row">
+            <label><input type="checkbox" id="${authId}" ${item.requiresAuth ? 'checked' : ''}/> 带认证</label>
+            <button class="primary" onclick="sendEndpoint('${item.method}', '${item.path}', ${JSON.stringify(item.pathVars || [])}, '${id}', '${queryId}', '${bodyId}', '${authId}', '${statusId}', '${hdrId}', '${outId}')">发送</button>
+            <button onclick="preflightEndpoint('${item.method}', '${item.path}', '${statusId}', '${hdrId}', '${outId}')">预检</button>
+          </div>
+          <div class="row"><strong>状态：</strong> <span id="${statusId}" class="muted">-</span></div>
+          <div class="row"><strong>响应头：</strong></div>
+          <pre id="${hdrId}"></pre>
+          <div class="row"><strong>响应体：</strong></div>
+          <pre id="${outId}"></pre>
+        `;
+
+        container.appendChild(wrapper);
+      }
+
+      function materializeEndpoints() {
+        const root = document.getElementById('endpoints');
+        endpointCatalog.forEach(group => {
+          const sec = document.createElement('details');
+          sec.open = false;
+          const sum = document.createElement('summary');
+          sum.textContent = group.section;
+          sec.appendChild(sum);
+          group.items.forEach(item => buildEndpointForm(sec, item));
+          root.appendChild(sec);
+        });
+      }
+      document.addEventListener('DOMContentLoaded', materializeEndpoints);
+
+      function substitutePath(path, pathVars, prefix) {
+        let p = path;
+        (pathVars || []).forEach(v => {
+          const val = document.getElementById(`${prefix}_${v}`).value.trim();
+          p = p.replace(`{${v}}`, val || `{${v}}`);
+        });
+        return p;
+      }
+
+      async function sendEndpoint(method, path, pathVars, prefix, queryId, bodyId, authId, statusId, hdrId, outId) {
+        const withAuth = document.getElementById(authId).checked;
+        const finalPath = substitutePath(path, pathVars, prefix);
+        const queryPairs = readQueryParams(queryId);
+        const bodyTextRaw = bodyId ? (document.getElementById(bodyId)?.value || '') : '';
+        let bodyText = bodyTextRaw;
+        if (bodyText && bodyText.length > 0 && ['POST','PUT','PATCH'].includes(method)) {
+          try { JSON.parse(bodyText); } catch(e) { alert('请求体不是有效 JSON'); return; }
+        }
+        const res = await doFetch(method, finalPath, { withAuth, queryPairs, bodyText });
+        setStatus(document.getElementById(statusId), res.ok, res.status, res.statusText);
+        document.getElementById(hdrId).textContent = JSON.stringify(res.headers, null, 2);
+        try {
+          document.getElementById(outId).textContent = typeof res.body === 'string' ? res.body : JSON.stringify(res.body, null, 2);
+        } catch (e) {
+          document.getElementById(outId).textContent = String(res.body);
+        }
+      }
+
+      async function preflightEndpoint(method, path, statusId, hdrId, outId) {
+        const res = await doFetch('OPTIONS', path, {
+          withAuth: false,
+          extraHeaders: {
+            'Access-Control-Request-Method': method,
+            'Access-Control-Request-Headers': 'content-type, authorization'
+          },
+          expectJson: false
+        });
+        setStatus(document.getElementById(statusId), res.ok, res.status, res.statusText);
+        document.getElementById(hdrId).textContent = JSON.stringify(res.headers, null, 2);
+        document.getElementById(outId).textContent = typeof res.body === 'string' ? res.body : JSON.stringify(res.body, null, 2);
+      }
+
+      // ------------------------------
+      // 冒烟测试：登录→当前用户→各列表接口
+      // ------------------------------
+      async function runSmokeTests() {
+        const logEl = document.getElementById('smokeLog');
+        const append = (msg) => { logEl.textContent += msg + "\n"; };
+        logEl.textContent = '';
+
+        append('1) 登录');
+        try {
+          const username = document.getElementById('username').value.trim();
+          const password = document.getElementById('password').value;
+          const resLogin = await doFetch('POST', '/auth/login', { withAuth: false, bodyText: JSON.stringify({ username, password }) });
+          if (resLogin.ok && resLogin.body && resLogin.body.data && resLogin.body.data.token) {
+            jwtToken = resLogin.body.data.token;
+            document.getElementById('jwtTokenDisplay').textContent = jwtToken;
+            append('   ✔ 登录成功');
+          } else {
+            append('   ✖ 登录失败');
+            return;
+          }
+        } catch (e) { append('   ✖ 登录异常: ' + e.message); return; }
+
+        append('2) 当前用户');
+        try {
+          const res = await doFetch('GET', '/auth/current-user');
+          append(`   状态: ${res.status} ${res.statusText}`);
+        } catch (e) { append('   ✖ 当前用户异常: ' + e.message); }
+
+        const listEndpoints = [
+          '/users', '/positions', '/organizations', '/employees',
+          '/professional-titles', '/position-title-mappings', '/salary-items',
+          '/salary-issue-details', '/salary-adjustments', '/employee-change-logs'
+        ];
+        append('3) 列表接口 (GET)');
+        for (const p of listEndpoints) {
+          try {
+            const res = await doFetch('GET', p);
+            append(`   ${p}: ${res.status} ${res.statusText}`);
+          } catch (e) {
+            append(`   ${p}: 异常 ${e.message}`);
+          }
+        }
+        append('完成');
+      }
+    </script>
+  </body>
+</html>

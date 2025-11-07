@@ -27,6 +27,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void save(User user) {
+        // 如果 createdBy 未设置，则默认设置为系统管理员 ID (例如 1L)
+        // 在实际应用中，这应该来自经过身份验证的用户的上下文
+        if (user.getCreatedBy() == null) {
+            user.setCreatedBy(1L); // 假设 1L 是默认管理员用户 ID
+        }
         userMapper.insert(user);
     }
 
@@ -76,45 +81,4 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    @Override
-    public User register(User user) {
-        if (user == null) {
-            throw new RuntimeException("注册信息不能为空");
-        }
-
-        String username = user.getUsername();
-        String password = user.getPassword();
-
-        if (username == null || username.trim().isEmpty()) {
-            throw new RuntimeException("用户名不能为空");
-        }
-        if (password == null || password.trim().isEmpty()) {
-            throw new RuntimeException("密码不能为空");
-        }
-
-        if (isUsernameExists(username)) {
-            throw new RuntimeException("用户名已存在");
-        }
-
-        // 使用与登录一致的MD5进行密码加密（保持当前系统一致性）
-        String encryptedPassword = DigestUtils.md5DigestAsHex(password.getBytes(StandardCharsets.UTF_8));
-        user.setPassword(encryptedPassword);
-
-        // 默认角色与状态
-        if (user.getRole() == null || user.getRole().trim().isEmpty()) {
-            user.setRole("user");
-        }
-        if (user.getStatus() == null || user.getStatus().trim().isEmpty()) {
-            user.setStatus("active");
-        }
-
-        // 创建人默认设置为0（匿名注册）
-        if (user.getCreatedBy() == null) {
-            user.setCreatedBy(0L);
-        }
-
-        userMapper.insert(user);
-        // 返回带ID的用户信息
-        return userMapper.findByUsername(username);
-    }
 }

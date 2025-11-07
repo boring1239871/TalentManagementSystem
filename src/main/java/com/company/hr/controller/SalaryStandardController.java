@@ -68,8 +68,8 @@ public class SalaryStandardController extends BaseController {
     // 审核薪资标准
     @PostMapping("/{stdId}/review")
     public Result<String> reviewSalaryStandard(
-            @PathVariable Long stdId, 
-            @RequestParam Long reviewerId, 
+            @PathVariable Long stdId,
+            @RequestParam Long reviewerId,
             @RequestParam(required = false) String comment) {
         salaryStandardService.reviewSalaryStandard(stdId, reviewerId, comment);
         return Result.success("薪资标准审核成功");
