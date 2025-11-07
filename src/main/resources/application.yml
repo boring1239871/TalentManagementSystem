@@ -10,7 +10,7 @@ spring:
     time-zone: Asia/Shanghai
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
